@@ -11,10 +11,12 @@
         <header>
             <h1>🍽️ Avaliação de Restaurantes</h1>
             <div class="auth-section" id="authSection">
+                <button id="wakeServerBtnAuth" class="btn btn-warning">🔌 Iniciar Servidor</button>
                 <button id="loginBtn" class="btn btn-primary">Entrar</button>
                 <button id="registerBtn" class="btn btn-secondary">Cadastrar</button>
             </div>
             <div class="user-section hidden" id="userSection">
+                <button id="wakeServerBtnUser" class="btn btn-warning">🔌 Iniciar Servidor</button>
                 <span id="userName"></span>
                 <button id="logoutBtn" class="btn btn-secondary">Sair</button>
             </div>
@@ -144,6 +146,30 @@
                     <button type="submit" class="btn btn-success">Adicionar</button>
                 </form>
                 <p id="addRestaurantError" class="error hidden"></p>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteConfirmModal" class="modal hidden">
+            <div class="modal-content modal-small">
+                <h2>⚠️ Confirmar Exclusão</h2>
+                <p id="deleteConfirmText" class="confirm-text"></p>
+                <div class="confirm-actions">
+                    <button id="cancelDeleteBtn" class="btn btn-secondary">Cancelar</button>
+                    <button id="confirmDeleteBtn" class="btn btn-danger">Deletar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Wake Modal -->
+        <div id="serverWakeModal" class="modal hidden">
+            <div class="modal-content modal-small">
+                <h2>🔌 Iniciando Servidor</h2>
+                <div class="wake-loader">
+                    <div class="spinner"></div>
+                    <p>Aguarde, o servidor está inicializando...</p>
+                    <p class="wake-subtext">Isso pode levar até 1 minuto.</p>
+                </div>
             </div>
         </div>
     </div>
