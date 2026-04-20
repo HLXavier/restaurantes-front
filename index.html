@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação de Restaurantes</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍽️ Avaliação de Restaurantes</h1>
+            <div class="auth-section" id="authSection">
+                <button id="wakeServerBtnAuth" class="btn btn-warning">Iniciar Servidor</button>
+                <button id="loginBtn" class="btn btn-primary">Entrar</button>
+                <button id="registerBtn" class="btn btn-secondary">Cadastrar</button>
+            </div>
+            <div class="user-section hidden" id="userSection">
+                <span id="userName"></span>
+                <button id="wakeServerBtnUser" class="btn btn-warning">Iniciar Servidor</button>
+                <button id="logoutBtn" class="btn btn-secondary">Sair</button>
+            </div>
+        </header>
+
+        <!-- Auth Modal -->
+        <div id="authModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="authTitle">Entrar</h2>
+                <form id="authForm">
+                    <input type="text" id="authName" placeholder="Nome" class="hidden">
+                    <input type="email" id="authEmail" placeholder="Email" required>
+                    <input type="password" id="authPassword" placeholder="Senha" required>
+                    <button type="submit" class="btn btn-primary">Enviar</button>
+                </form>
+                <p id="authError" class="error hidden"></p>
+            </div>
+        </div>
+
+        <!-- Restaurant List -->
+        <section id="restaurantList" class="restaurant-list hidden">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar restaurante..." />
+            </div>
+            <div class="section-header">
+                <h2>Restaurantes</h2>
+                <button id="addRestaurantBtn" class="btn btn-success">Adicionar Restaurante</button>
+            </div>
+            <div id="restaurants" class="cards-container"></div>
+        </section>
+
+        <!-- Review Modal -->
+        <div id="reviewModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Avaliar <span id="reviewRestaurantName"></span></h2>
+                <form id="reviewForm">
+                    <input type="hidden" id="reviewRestaurantId">
+
+                    <div class="rating-group">
+                        <label>Qualidade da Comida (40%)</label>
+                        <div class="rating-slider">
+                            <input type="range" id="foodRating" min="1" max="5" step="0.5" value="3">
+                            <span class="rating-value">3.0</span>
+                        </div>
+                    </div>
+
+                    <div class="rating-group">
+                        <label>Atendimento (20%)</label>
+                        <div class="rating-slider">
+                            <input type="range" id="serviceRating" min="1" max="5" step="0.5" value="3">
+                            <span class="rating-value">3.0</span>
+                        </div>
+                    </div>
+
+                    <div class="rating-group">
+                        <label>Ambiente (15%)</label>
+                        <div class="rating-slider">
+                            <input type="range" id="atmosphereRating" min="1" max="5" step="0.5" value="3">
+                            <span class="rating-value">3.0</span>
+                        </div>
+                    </div>
+
+                    <div class="rating-group">
+                        <label>Custo-Benefício (15%)</label>
+                        <div class="rating-slider">
+                            <input type="range" id="priceRating" min="1" max="5" step="0.5" value="3">
+                            <span class="rating-value">3.0</span>
+                        </div>
+                    </div>
+
+                    <div class="rating-group">
+                        <label>Tempo de Espera (5%)</label>
+                        <div class="rating-slider">
+                            <input type="range" id="waitTimeRating" min="1" max="5" step="0.5" value="3">
+                            <span class="rating-value">3.0</span>
+                        </div>
+                    </div>
+
+                    <div class="rating-group">
+                        <label>Localização e Acesso (5%)</label>
+                        <div class="rating-slider">
+                            <input type="range" id="locationRating" min="1" max="5" step="0.5" value="3">
+                            <span class="rating-value">3.0</span>
+                        </div>
+                    </div>
+
+                    <div class="comments-group">
+                        <label for="reviewComments">Comentários (opcional)</label>
+                        <textarea id="reviewComments" placeholder="Compartilhe sua experiência..." rows="4"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Enviar Avaliação</button>
+                </form>
+                <p id="reviewError" class="error hidden"></p>
+            </div>
+        </div>
+
+        <!-- Reviews List Modal -->
+        <div id="reviewsModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Avaliações de <span id="reviewsRestaurantName"></span></h2>
+                <div id="reviewsList"></div>
+            </div>
+        </div>
+
+        <!-- Add Restaurant Modal -->
+        <div id="addRestaurantModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Adicionar Restaurante</h2>
+                <form id="addRestaurantForm">
+                    <input type="text" id="restaurantName" placeholder="Nome do Restaurante" required>
+                    <input type="text" id="restaurantLocation" placeholder="Localização" required>
+                    <textarea id="restaurantDescription" placeholder="Descrição" rows="3" required></textarea>
+
+                    <div class="image-upload">
+                        <label for="restaurantImage" class="image-label">Imagem do Restaurante</label>
+                        <input type="file" id="restaurantImage" accept="image/*" required>
+                        <div id="imagePreview" class="image-preview hidden">
+                            <img id="previewImg" src="" alt="Preview">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Adicionar</button>
+                </form>
+                <p id="addRestaurantError" class="error hidden"></p>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteConfirmModal" class="modal hidden">
+            <div class="modal-content modal-small">
+                <h2>⚠️ Confirmar Exclusão</h2>
+                <p id="deleteConfirmText" class="confirm-text"></p>
+                <div class="confirm-actions">
+                    <button id="cancelDeleteBtn" class="btn btn-secondary">Cancelar</button>
+                    <button id="confirmDeleteBtn" class="btn btn-danger">Deletar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Wake Modal -->
+        <div id="serverWakeModal" class="modal hidden">
+            <div class="modal-content modal-small">
+                <h2>Iniciando Servidor</h2>
+                <div class="wake-loader">
+                    <div class="spinner"></div>
+                    <p>Aguarde, o servidor está inicializando...</p>
+                    <p class="wake-subtext">Isso pode levar até 1 minuto.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
