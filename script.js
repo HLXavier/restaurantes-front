@@ -1,5 +1,5 @@
 // API Configuration
-const API_URL = 'https://restaurantes-8918.onrender.co';
+const API_URL = 'https://restaurantes-8918.onrender.com';
 
 // State
 let authToken = localStorage.getItem('authToken');
