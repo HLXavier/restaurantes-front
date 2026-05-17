@@ -1,5 +1,5 @@
 // API Configuration
-const API_URL = 'https://restaurantes-8918.onrender.com';
+const API_URL = 'http://localhost:3000';
 
 // State
 let authToken = localStorage.getItem('authToken');
@@ -7,15 +7,20 @@ let currentUser = JSON.parse(localStorage.getItem('currentUser'));
 let restaurants = [];
 let reviews = [];
 
-// Score to emoji mapping
+// Score to emoji mapping (1-10 scale)
 function getScoreEmoji(score, isGoat = false) {
   if (score === 0) return { emoji: '👻', text: 'Sem avaliações' };
   if (isGoat) return { emoji: '🐐', text: 'GOAT' };
-  if (score >= 4.5) return { emoji: '🎖️', text: 'Perfect' };
-  if (score >= 3.5) return { emoji: '👏', text: 'Top' };
-  if (score >= 2.5) return { emoji: '😐', text: 'Blé' };
-  if (score >= 1.5) return { emoji: '🫩', text: 'Vei Podi' };
-  return { emoji: '🤮', text: 'Gorfo Extremo' };
+  if (score >= 10) return { emoji: '👩‍🍳', text: 'Dauzi Mode' };
+  if (score >= 9) return { emoji: '🤩', text: 'Supremo' };
+  if (score >= 8) return { emoji: '🥰', text: 'Top' };
+  if (score >= 7) return { emoji: '😊', text: 'Bom' };
+  if (score >= 6) return { emoji: '🙂', text: 'Ok' };
+  if (score >= 5) return { emoji: '😐', text: 'Blé' };
+  if (score >= 4) return { emoji: '🥴', text: 'Ruinzinho' };
+  if (score >= 3) return { emoji: '🫩', text: 'Véi Podi' };
+  if (score >= 2) return { emoji: '🤢', text: 'Horrível' };
+  return { emoji: '🤮', text: 'Gorfo extremo' };
 }
 
 // Initialize
@@ -71,6 +76,14 @@ function setupEventListeners() {
     .getElementById('searchInput')
     .addEventListener('input', filterRestaurants);
 
+  // Server wake close button
+  document
+    .getElementById('serverWakeCloseBtn')
+    .addEventListener('click', () => {
+      document.getElementById('serverWakeModal').classList.add('hidden');
+      resetServerWakeModal();
+    });
+
   // Delete confirmation
   document
     .getElementById('cancelDeleteBtn')
@@ -85,9 +98,7 @@ function setupEventListeners() {
   );
   ratingInputs.forEach((input) => {
     input.addEventListener('input', (e) => {
-      e.target.nextElementSibling.textContent = parseFloat(
-        e.target.value,
-      ).toFixed(1);
+      e.target.nextElementSibling.textContent = parseInt(e.target.value);
     });
   });
 
@@ -118,7 +129,7 @@ function updateAuthUI() {
     authSection.classList.add('hidden');
     userSection.classList.remove('hidden');
     restaurantList.classList.remove('hidden');
-    userName.textContent = `👋 ${currentUser.name}`;
+    userName.textContent = currentUser.name;
   } else {
     authSection.classList.remove('hidden');
     userSection.classList.add('hidden');
@@ -241,21 +252,37 @@ function renderRestaurants(restaurantList) {
     return;
   }
 
-  // Find GOAT (highest score)
-  const maxScore = Math.max(...restaurantList.map((r) => r.averageReview || 0));
+  // Sort restaurants by average review (highest to lowest)
+  const sortedRestaurants = [...restaurantList].sort((a, b) => {
+    const scoreA = a.averageReview || 0;
+    const scoreB = b.averageReview || 0;
+    return scoreB - scoreA;
+  });
 
-  container.innerHTML = restaurantList
+  // Find GOAT (highest score)
+  const maxScore = Math.max(...sortedRestaurants.map((r) => r.averageReview || 0));
+
+  container.innerHTML = sortedRestaurants
     .map((restaurant) => {
       const score = restaurant.averageReview || 0;
       const isGoat = score > 0 && score === maxScore && maxScore > 0;
       const scoreInfo = getScoreEmoji(score, isGoat);
 
+      // Escape strings for safe onclick attribute usage
+      const escapedName = restaurant.name.replace(/'/g, "\\'");
+      const escapedLocation = restaurant.location.replace(/'/g, "\\'");
+      const escapedDescription = restaurant.description.replace(/'/g, "\\'");
+      const escapedImage = restaurant.image.replace(/'/g, "\\'");
+
       return `
             <div class="restaurant-card">
                 <div class="restaurant-menu">
-                    <button class="menu-btn" onclick="toggleMenu(event, '${restaurant.name}')">⋯</button>
+                    <button class="menu-btn" onclick="toggleMenu(event, '${escapedName}')">⋯</button>
                     <div class="menu-dropdown hidden" id="menu-${restaurant.id}">
-                        <button class="menu-item menu-item-danger" onclick="confirmDeleteRestaurant('${restaurant.name}')">
+                        <button class="menu-item" onclick="openEditRestaurantModal('${restaurant.id}', '${escapedName}', '${escapedLocation}', '${escapedDescription}', '${escapedImage}')">
+                            Editar
+                        </button>
+                        <button class="menu-item menu-item-danger" onclick="confirmDeleteRestaurant('${escapedName}')">
                             Deletar
                         </button>
                     </div>
@@ -266,23 +293,23 @@ function renderRestaurants(restaurantList) {
                      onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22%3E%3Crect fill=%22%23e2e8f0%22 width=%22400%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2224%22 fill=%22%2364748b%22 text-anchor=%22middle%22 dy=%22.3em%22%3ESem Imagem%3C/text%3E%3C/svg%3E'">
                 <div class="restaurant-info">
                     <div class="restaurant-header">
-                        <div>
+                        <div class="restaurant-main-content">
                             <div class="restaurant-name">${restaurant.name}</div>
                             <div class="restaurant-location">📍 ${restaurant.location}</div>
+                            <div class="restaurant-description">${restaurant.description}</div>
                         </div>
                         <div class="score-badge">
                             <div class="score-emoji">${scoreInfo.emoji}</div>
-                            <div class="score-text">${scoreInfo.text}</div>
+                            <div class="score-text ${isGoat ? 'goat-text' : ''}">${scoreInfo.text}</div>
                             <div class="score-number">${score.toFixed(1)}</div>
                         </div>
                     </div>
-                    <div class="restaurant-description">${restaurant.description}</div>
                     <div class="restaurant-actions">
                         <button class="btn btn-primary" onclick="openReviewModal('${restaurant.name}')">
-                            ⭐ Avaliar
+                            Avaliar
                         </button>
                         <button class="btn btn-secondary" onclick="loadReviews('${restaurant.name}')">
-                            📋 Avaliações
+                            Avaliações
                         </button>
                     </div>
                 </div>
@@ -303,12 +330,13 @@ function openReviewModal(restaurantName) {
   const modal = document.getElementById('reviewModal');
   document.getElementById('reviewRestaurantName').textContent = restaurantName;
   document.getElementById('reviewRestaurantId').value = restaurantName;
+  document.getElementById('reviewId').value = ''; // Clear review ID for new reviews
   document.getElementById('reviewForm').reset();
   document.getElementById('reviewError').classList.add('hidden');
 
   // Reset rating displays
   document.querySelectorAll('.rating-value').forEach((el) => {
-    el.textContent = '3.0';
+    el.textContent = '5';
   });
 
   modal.classList.remove('hidden');
@@ -318,6 +346,7 @@ async function handleReviewSubmit(e) {
   e.preventDefault();
 
   const restaurantName = document.getElementById('reviewRestaurantId').value;
+  const reviewId = document.getElementById('reviewId').value;
   const food = parseFloat(document.getElementById('foodRating').value);
   const service = parseFloat(document.getElementById('serviceRating').value);
   const atmosphere = parseFloat(
@@ -331,21 +360,30 @@ async function handleReviewSubmit(e) {
 
   try {
     const body = {
-      restaurantName,
-      food: Math.round(food * 2) / 2, // Round to nearest 0.5
-      service: Math.round(service * 2) / 2,
-      atmosphere: Math.round(atmosphere * 2) / 2,
-      price: Math.round(price * 2) / 2,
-      waitTime: Math.round(waitTime * 2) / 2,
-      location: Math.round(location * 2) / 2,
+      food: Math.round(food),
+      service: Math.round(service),
+      atmosphere: Math.round(atmosphere),
+      price: Math.round(price),
+      waitTime: Math.round(waitTime),
+      location: Math.round(location),
     };
 
     if (comments) {
       body.comments = comments;
     }
 
-    const response = await fetch(`${API_URL}/review`, {
-      method: 'POST',
+    // Check if we're updating or creating
+    const isUpdate = reviewId !== '';
+    const url = isUpdate ? `${API_URL}/review/${reviewId}` : `${API_URL}/review`;
+    const method = isUpdate ? 'PUT' : 'POST';
+
+    // Add restaurantName only for new reviews
+    if (!isUpdate) {
+      body.restaurantName = restaurantName;
+    }
+
+    const response = await fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authToken}`,
@@ -361,10 +399,71 @@ async function handleReviewSubmit(e) {
 
     document.getElementById('reviewModal').classList.add('hidden');
     loadRestaurants(); // Reload to show updated scores
-    alert('Avaliação enviada com sucesso!');
+
+    // If it was an update, reopen the reviews list
+    if (isUpdate) {
+      setTimeout(() => loadReviews(restaurantName), 300); // Small delay for smooth transition
+    }
+
+    alert(isUpdate ? 'Avaliação atualizada com sucesso!' : 'Avaliação enviada com sucesso!');
   } catch (error) {
     errorEl.textContent = error.message;
     errorEl.classList.remove('hidden');
+  }
+}
+
+async function openEditReviewModal(reviewId, restaurantName) {
+  if (!authToken) {
+    alert('Por favor, faça login para editar avaliações');
+    return;
+  }
+
+  // Close the reviews list modal first
+  document.getElementById('reviewsModal').classList.add('hidden');
+
+  try {
+    // Fetch the review data
+    const response = await fetch(
+      `${API_URL}/review?restaurantName=${encodeURIComponent(restaurantName)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    );
+    const reviews = await response.json();
+    const review = reviews.find((r) => r.id === reviewId);
+
+    if (!review) {
+      alert('Avaliação não encontrada');
+      return;
+    }
+
+    // Open modal and populate with existing data
+    const modal = document.getElementById('reviewModal');
+    document.getElementById('reviewRestaurantName').textContent = restaurantName;
+    document.getElementById('reviewRestaurantId').value = restaurantName;
+    document.getElementById('reviewId').value = reviewId;
+    document.getElementById('reviewError').classList.add('hidden');
+
+    // Set the rating values
+    document.getElementById('foodRating').value = review.food;
+    document.getElementById('serviceRating').value = review.service;
+    document.getElementById('atmosphereRating').value = review.atmosphere;
+    document.getElementById('priceRating').value = review.price;
+    document.getElementById('waitTimeRating').value = review.waitTime;
+    document.getElementById('locationRating').value = review.location;
+    document.getElementById('reviewComments').value = review.comments || '';
+
+    // Update rating displays
+    document.querySelectorAll('.rating-value').forEach((el, index) => {
+      const values = [review.food, review.service, review.atmosphere, review.price, review.waitTime, review.location];
+      el.textContent = values[index];
+    });
+
+    modal.classList.remove('hidden');
+  } catch (error) {
+    alert(`Erro ao carregar avaliação: ${error.message}`);
   }
 }
 
@@ -398,14 +497,22 @@ async function loadReviews(restaurantName) {
       .map((review) => {
         const date = new Date(review.createdAt).toLocaleDateString('pt-BR');
         const userScoreInfo = getScoreEmoji(review.userScore, false);
+        const isOwnReview = currentUser && review.userId === currentUser.id;
         return `
                 <div class="review-item">
                     <div class="review-header">
                         <div class="review-user">👤 ${review.userName}</div>
-                        <div class="user-score-badge">
-                            <span class="score-emoji">${userScoreInfo.emoji}</span>
-                            <span class="score-text">${userScoreInfo.text}</span>
-                            <span class="score-number">${review.userScore.toFixed(1)}</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            ${isOwnReview ? `
+                                <button class="btn btn-primary" style="padding: 0.5rem 0.75rem; font-size: 0.75rem;" onclick="openEditReviewModal('${review.id}', '${review.restaurantName}')">
+                                    Editar
+                                </button>
+                            ` : ''}
+                            <div class="user-score-badge">
+                                <span class="score-emoji">${userScoreInfo.emoji}</span>
+                                <span class="score-text">${userScoreInfo.text}</span>
+                                <span class="score-number">${review.userScore.toFixed(1)}</span>
+                            </div>
                         </div>
                     </div>
                     <div class="review-date-small">${date}</div>
@@ -451,9 +558,50 @@ function openAddRestaurantModal() {
   }
 
   const modal = document.getElementById('addRestaurantModal');
+  document.getElementById('addRestaurantTitle').textContent = 'Adicionar Restaurante';
+  document.getElementById('restaurantSubmitBtn').textContent = 'Adicionar';
   document.getElementById('addRestaurantForm').reset();
+  document.getElementById('restaurantId').value = '';
+  document.getElementById('currentRestaurantImage').value = '';
+
+  // Show input, hide display
+  document.getElementById('restaurantName').classList.remove('hidden');
+  document.getElementById('restaurantNameDisplay').classList.add('hidden');
+
+  document.getElementById('restaurantImage').required = true;
   document.getElementById('addRestaurantError').classList.add('hidden');
   document.getElementById('imagePreview').classList.add('hidden');
+  modal.classList.remove('hidden');
+}
+
+function openEditRestaurantModal(id, name, location, description, image) {
+  if (!authToken) {
+    alert('Por favor, faça login para editar restaurantes');
+    return;
+  }
+
+  const modal = document.getElementById('addRestaurantModal');
+  document.getElementById('addRestaurantTitle').textContent = 'Editar Restaurante';
+  document.getElementById('restaurantSubmitBtn').textContent = 'Atualizar';
+  document.getElementById('restaurantId').value = id;
+  document.getElementById('currentRestaurantImage').value = image;
+
+  // Hide input, show display
+  document.getElementById('restaurantName').classList.add('hidden');
+  document.getElementById('restaurantNameDisplay').textContent = name;
+  document.getElementById('restaurantNameDisplay').classList.remove('hidden');
+
+  document.getElementById('restaurantLocation').value = location;
+  document.getElementById('restaurantDescription').value = description;
+  document.getElementById('restaurantImage').required = false;
+  document.getElementById('addRestaurantError').classList.add('hidden');
+
+  // Show current image preview
+  const preview = document.getElementById('imagePreview');
+  const img = document.getElementById('previewImg');
+  img.src = `${API_URL}/images/restaurants/${image}`;
+  preview.classList.remove('hidden');
+
   modal.classList.remove('hidden');
 }
 
@@ -474,50 +622,69 @@ function handleImagePreview(e) {
 async function handleAddRestaurant(e) {
   e.preventDefault();
 
+  const restaurantId = document.getElementById('restaurantId').value;
   const name = document.getElementById('restaurantName').value;
   const location = document.getElementById('restaurantLocation').value;
   const description = document.getElementById('restaurantDescription').value;
   const imageFile = document.getElementById('restaurantImage').files[0];
+  const currentImage = document.getElementById('currentRestaurantImage').value;
   const errorEl = document.getElementById('addRestaurantError');
 
-  if (!imageFile) {
+  const isUpdate = restaurantId !== '';
+
+  // Image is required for new restaurants, optional for updates
+  if (!isUpdate && !imageFile) {
     errorEl.textContent = 'Por favor, selecione uma imagem';
     errorEl.classList.remove('hidden');
     return;
   }
 
   try {
-    // Convert image to base64
-    const base64Image = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(imageFile);
-    });
+    const body = {
+      location,
+      description,
+    };
 
-    const response = await fetch(`${API_URL}/restaurant`, {
-      method: 'POST',
+    // Only include name for new restaurants
+    if (!isUpdate) {
+      body.name = name;
+    }
+
+    // If there's a new image, convert it to base64
+    if (imageFile) {
+      const base64Image = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageFile);
+      });
+      body.image = base64Image;
+    } else if (isUpdate) {
+      // Keep the existing image if no new one is provided
+      body.image = currentImage;
+    }
+
+    const url = isUpdate ? `${API_URL}/restaurant/${restaurantId}` : `${API_URL}/restaurant`;
+    const method = isUpdate ? 'PUT' : 'POST';
+
+    const response = await fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify({
-        name,
-        location,
-        description,
-        image: base64Image,
-      }),
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Falha ao adicionar restaurante');
+      throw new Error(data.message || `Falha ao ${isUpdate ? 'atualizar' : 'adicionar'} restaurante`);
     }
 
     document.getElementById('addRestaurantModal').classList.add('hidden');
-    loadRestaurants(); // Reload to show new restaurant
-    alert('Restaurante adicionado com sucesso!');
+    loadRestaurants(); // Reload to show new/updated restaurant
+    alert(isUpdate ? 'Restaurante atualizado com sucesso!' : 'Restaurante adicionado com sucesso!');
   } catch (error) {
     errorEl.textContent = error.message;
     errorEl.classList.remove('hidden');
@@ -614,9 +781,25 @@ async function deleteRestaurant(restaurantName) {
 }
 
 // Server wake function
+function resetServerWakeModal() {
+  document.getElementById('serverWakeTitle').textContent = 'Iniciando Servidor';
+  document.getElementById('serverWakeMessage').textContent = 'Aguarde, o servidor está inicializando...';
+  document.getElementById('serverWakeSubtext').textContent = 'Isso pode levar até 1 minuto.';
+  document.getElementById('serverWakeSubtext').classList.remove('hidden');
+  document.getElementById('serverSpinner').classList.remove('hidden');
+  document.getElementById('serverWakeCloseBtn').classList.add('hidden');
+}
+
 async function wakeServer() {
   const modal = document.getElementById('serverWakeModal');
+  const title = document.getElementById('serverWakeTitle');
+  const message = document.getElementById('serverWakeMessage');
+  const subtext = document.getElementById('serverWakeSubtext');
+  const spinner = document.getElementById('serverSpinner');
+  const closeBtn = document.getElementById('serverWakeCloseBtn');
+
   modal.classList.remove('hidden');
+  resetServerWakeModal();
 
   try {
     const controller = new AbortController();
@@ -629,20 +812,28 @@ async function wakeServer() {
     clearTimeout(timeoutId);
 
     if (response.ok) {
-      modal.classList.add('hidden');
-      alert('Servidor iniciado com sucesso! ✅');
+      // Success state
+      title.textContent = 'Servidor Iniciado! ✅';
+      message.textContent = 'O servidor está pronto e funcionando.';
+      subtext.classList.add('hidden');
+      spinner.classList.add('hidden');
+      closeBtn.classList.remove('hidden');
       loadRestaurants();
     } else {
       throw new Error('Falha ao conectar com o servidor');
     }
   } catch (error) {
-    modal.classList.add('hidden');
+    // Error state
+    title.textContent = 'Erro ao Iniciar ❌';
+    spinner.classList.add('hidden');
+    closeBtn.classList.remove('hidden');
+
     if (error.name === 'AbortError') {
-      alert(
-        'Tempo esgotado. O servidor pode estar demorando mais que o normal. Tente novamente em alguns instantes.',
-      );
+      message.textContent = 'Tempo esgotado. O servidor pode estar demorando mais que o normal.';
+      subtext.textContent = 'Tente novamente em alguns instantes.';
     } else {
-      alert(`Erro ao iniciar servidor: ${error.message}`);
+      message.textContent = `Erro: ${error.message}`;
+      subtext.textContent = 'Verifique sua conexão e tente novamente.';
     }
   }
 }

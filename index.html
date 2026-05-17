@@ -3,22 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avaliação de Restaurantes</title>
+    <title>Avaliações Gourmet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🍽️ Avaliação de Restaurantes</h1>
+    <div class="top-bar">
+        <div class="top-bar-content">
             <div class="auth-section" id="authSection">
-                <button id="wakeServerBtnAuth" class="btn btn-warning">Iniciar Servidor</button>
-                <button id="loginBtn" class="btn btn-primary">Entrar</button>
-                <button id="registerBtn" class="btn btn-secondary">Cadastrar</button>
+                <button id="wakeServerBtnAuth" class="btn btn-primary">Iniciar Servidor</button>
+                <div class="auth-buttons">
+                    <button id="loginBtn" class="btn btn-primary">Entrar</button>
+                    <button id="registerBtn" class="btn btn-secondary">Cadastrar</button>
+                </div>
             </div>
             <div class="user-section hidden" id="userSection">
-                <span id="userName"></span>
-                <button id="wakeServerBtnUser" class="btn btn-warning">Iniciar Servidor</button>
-                <button id="logoutBtn" class="btn btn-secondary">Sair</button>
+                <button id="wakeServerBtnUser" class="btn btn-primary">Iniciar Servidor</button>
+                <div class="user-info">
+                    <span id="userName"></span>
+                    <button id="logoutBtn" class="btn btn-secondary">Sair</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="header-title">
+                <div class="header-subtitle">Comida Boa</div>
+                <h1>Avaliações<br>Gourmet</h1>
+                <div class="header-stars">★ ★ ★ ★ ★</div>
             </div>
         </header>
 
@@ -44,7 +60,7 @@
             </div>
             <div class="section-header">
                 <h2>Restaurantes</h2>
-                <button id="addRestaurantBtn" class="btn btn-success">Adicionar Restaurante</button>
+                <button id="addRestaurantBtn" class="btn btn-primary">Adicionar Restaurante</button>
             </div>
             <div id="restaurants" class="cards-container"></div>
         </section>
@@ -56,52 +72,53 @@
                 <h2>Avaliar <span id="reviewRestaurantName"></span></h2>
                 <form id="reviewForm">
                     <input type="hidden" id="reviewRestaurantId">
+                    <input type="hidden" id="reviewId" value="">
 
                     <div class="rating-group">
                         <label>Qualidade da Comida (40%)</label>
                         <div class="rating-slider">
-                            <input type="range" id="foodRating" min="1" max="5" step="0.5" value="3">
-                            <span class="rating-value">3.0</span>
+                            <input type="range" id="foodRating" min="1" max="10" step="1" value="5">
+                            <span class="rating-value">5</span>
                         </div>
                     </div>
 
                     <div class="rating-group">
                         <label>Atendimento (20%)</label>
                         <div class="rating-slider">
-                            <input type="range" id="serviceRating" min="1" max="5" step="0.5" value="3">
-                            <span class="rating-value">3.0</span>
+                            <input type="range" id="serviceRating" min="1" max="10" step="1" value="5">
+                            <span class="rating-value">5</span>
                         </div>
                     </div>
 
                     <div class="rating-group">
                         <label>Ambiente (15%)</label>
                         <div class="rating-slider">
-                            <input type="range" id="atmosphereRating" min="1" max="5" step="0.5" value="3">
-                            <span class="rating-value">3.0</span>
+                            <input type="range" id="atmosphereRating" min="1" max="10" step="1" value="5">
+                            <span class="rating-value">5</span>
                         </div>
                     </div>
 
                     <div class="rating-group">
                         <label>Custo-Benefício (15%)</label>
                         <div class="rating-slider">
-                            <input type="range" id="priceRating" min="1" max="5" step="0.5" value="3">
-                            <span class="rating-value">3.0</span>
+                            <input type="range" id="priceRating" min="1" max="10" step="1" value="5">
+                            <span class="rating-value">5</span>
                         </div>
                     </div>
 
                     <div class="rating-group">
                         <label>Tempo de Espera (5%)</label>
                         <div class="rating-slider">
-                            <input type="range" id="waitTimeRating" min="1" max="5" step="0.5" value="3">
-                            <span class="rating-value">3.0</span>
+                            <input type="range" id="waitTimeRating" min="1" max="10" step="1" value="5">
+                            <span class="rating-value">5</span>
                         </div>
                     </div>
 
                     <div class="rating-group">
                         <label>Localização e Acesso (5%)</label>
                         <div class="rating-slider">
-                            <input type="range" id="locationRating" min="1" max="5" step="0.5" value="3">
-                            <span class="rating-value">3.0</span>
+                            <input type="range" id="locationRating" min="1" max="10" step="1" value="5">
+                            <span class="rating-value">5</span>
                         </div>
                     </div>
 
@@ -129,21 +146,24 @@
         <div id="addRestaurantModal" class="modal hidden">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2>Adicionar Restaurante</h2>
+                <h2 id="addRestaurantTitle">Adicionar Restaurante</h2>
                 <form id="addRestaurantForm">
+                    <input type="hidden" id="restaurantId" value="">
+                    <input type="hidden" id="currentRestaurantImage" value="">
+                    <div id="restaurantNameDisplay" class="restaurant-name-display hidden"></div>
                     <input type="text" id="restaurantName" placeholder="Nome do Restaurante" required>
                     <input type="text" id="restaurantLocation" placeholder="Localização" required>
                     <textarea id="restaurantDescription" placeholder="Descrição" rows="3" required></textarea>
 
                     <div class="image-upload">
                         <label for="restaurantImage" class="image-label">Imagem do Restaurante</label>
-                        <input type="file" id="restaurantImage" accept="image/*" required>
+                        <input type="file" id="restaurantImage" accept="image/*">
                         <div id="imagePreview" class="image-preview hidden">
                             <img id="previewImg" src="" alt="Preview">
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success">Adicionar</button>
+                    <button type="submit" class="btn btn-primary" id="restaurantSubmitBtn">Adicionar</button>
                 </form>
                 <p id="addRestaurantError" class="error hidden"></p>
             </div>
@@ -164,11 +184,15 @@
         <!-- Server Wake Modal -->
         <div id="serverWakeModal" class="modal hidden">
             <div class="modal-content modal-small">
-                <h2>Iniciando Servidor</h2>
+                <h2 id="serverWakeTitle">Iniciando Servidor</h2>
                 <div class="wake-loader">
-                    <div class="spinner"></div>
-                    <p>Aguarde, o servidor está inicializando...</p>
-                    <p class="wake-subtext">Isso pode levar até 1 minuto.</p>
+                    <div class="spinner" id="serverSpinner"></div>
+                    <p id="serverWakeMessage">Aguarde, o servidor está inicializando...</p>
+                    <p class="wake-subtext" id="serverWakeSubtext">Isso pode levar até 1 minuto.</p>
+                    <button id="serverWakeCloseBtn" class="btn btn-primary hidden" style="margin-top: 1rem;">Fechar</button>
+                </div>
+            </div>
+        </div>
                 </div>
             </div>
         </div>
